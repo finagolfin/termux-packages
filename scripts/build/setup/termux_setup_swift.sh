@@ -3,9 +3,8 @@ termux_setup_swift() {
 	export SWIFT_TARGET_TRIPLE=${SWIFT_TRIPLE/arm-/armv7-}
 
 	if [ "$TERMUX_ON_DEVICE_BUILD" = "false" ]; then
-		local TERMUX_SWIFT_VERSION=$(. $TERMUX_SCRIPTDIR/packages/swift/build.sh; echo $TERMUX_PKG_VERSION)
 		local SWIFT_RELEASE=$(. $TERMUX_SCRIPTDIR/packages/swift/build.sh; echo $SWIFT_RELEASE)
-		local SWIFT_BIN="swift-$TERMUX_SWIFT_VERSION-$SWIFT_RELEASE-ubuntu22.04"
+		local SWIFT_BIN="swift-$SWIFT_RELEASE-ubuntu22.04"
 		local SWIFT_FOLDER
 
 		if [ "${TERMUX_PACKAGES_OFFLINE-false}" = "true" ]; then
@@ -17,7 +16,7 @@ termux_setup_swift() {
 		if [ ! -d "$SWIFT_FOLDER" ]; then
 			local SWIFT_TAR=$TERMUX_PKG_TMPDIR/${SWIFT_BIN}.tar.gz
 			termux_download \
-				https://download.swift.org/swift-$TERMUX_SWIFT_VERSION-release/ubuntu2204/swift-$TERMUX_SWIFT_VERSION-$SWIFT_RELEASE/$SWIFT_BIN.tar.gz \
+				https://download.swift.org/development/ubuntu2204/swift-$SWIFT_RELEASE/$SWIFT_BIN.tar.gz \
 				$SWIFT_TAR \
 				ded6983736ab5e15862e5a924ebd5c4f9459802317eff719936442c832698d06
 
