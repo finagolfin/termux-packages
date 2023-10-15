@@ -1,0 +1,139 @@
+commit 781f95117b86330d3d97857d16e4674e5bb492f1
+Date:   Sun Feb 11 19:00:45 2024 +0530
+
+    [CMake] Add broader support for cross-compiling the portions of the compiler that are written in Swift to non-Darwin Unix
+
+diff --git a/swift/SwiftCompilerSources/CMakeLists.txt b/swift/SwiftCompilerSources/CMakeLists.txt
+index 9b88db45aa2..f63b8aec03c 100644
+--- a/swift/SwiftCompilerSources/CMakeLists.txt
++++ b/swift/SwiftCompilerSources/CMakeLists.txt
+@@ -148,10 +148,9 @@ function(add_swift_compiler_modules_library name)
+       list(APPEND sdk_option "-resource-dir" "${swift_exec_bin_dir}/../bootstrapping0/lib/swift")
+     endif()
+   elseif(BOOTSTRAPPING_MODE STREQUAL "CROSSCOMPILE")
+-    get_filename_component(swift_exec_bin_dir ${ALS_SWIFT_EXEC} DIRECTORY)
+     # NOTE: prepending allows SWIFT_COMPILER_SOURCES_SDK_FLAGS to override the
+     # resource directory if needed.
+-    list(PREPEND sdk_option "-resource-dir" "${swift_exec_bin_dir}/../lib/swift")
++    list(PREPEND sdk_option "-resource-dir" "${SWIFTLIB_DIR}")
+   endif()
+   get_versioned_target_triple(target ${SWIFT_HOST_VARIANT_SDK}
+       ${SWIFT_HOST_VARIANT_ARCH} "${deployment_version}")
+@@ -225,6 +224,9 @@ function(add_swift_compiler_modules_library name)
+         importedHeaderDependencies
+       COMMENT "Building swift module ${module}")
+ 
++    if(BOOTSTRAPPING_MODE STREQUAL "CROSSCOMPILE")
++      add_dependencies(${dep_target} swift-stdlib-${SWIFT_SDK_${SWIFT_HOST_VARIANT_SDK}_LIB_SUBDIR}-${SWIFT_HOST_VARIANT_ARCH})
++    endif()
+     set("${module}_dep_target" ${dep_target})
+     set(all_module_targets ${all_module_targets} ${dep_target})
+   endforeach()
+diff --git a/swift/cmake/modules/AddPureSwift.cmake b/swift/cmake/modules/AddPureSwift.cmake
+index 89fad7e23f5..f310bed3924 100644
+--- a/swift/cmake/modules/AddPureSwift.cmake
++++ b/swift/cmake/modules/AddPureSwift.cmake
+@@ -60,6 +60,16 @@ function(_add_host_swift_compile_options name)
+     $<$<COMPILE_LANGUAGE:Swift>:none>)
+ 
+   target_compile_options(${name} PRIVATE $<$<COMPILE_LANGUAGE:Swift>:-target;${SWIFT_HOST_TRIPLE}>)
++  if(BOOTSTRAPPING_MODE STREQUAL "CROSSCOMPILE")
++    add_dependencies(${name} swift-stdlib-${SWIFT_SDK_${SWIFT_HOST_VARIANT_SDK}_LIB_SUBDIR}-${SWIFT_HOST_VARIANT_ARCH})
++    target_compile_options(${name} PRIVATE
++      $<$<COMPILE_LANGUAGE:Swift>:-sdk;${SWIFT_SDK_${SWIFT_HOST_VARIANT_SDK}_ARCH_${SWIFT_HOST_VARIANT_ARCH}_PATH};>
++      $<$<COMPILE_LANGUAGE:Swift>:-resource-dir;${SWIFTLIB_DIR};>)
++    if (NOT "${SWIFT_ANDROID_NDK_PATH}" STREQUAL "")
++      swift_android_tools_path(${SWIFT_HOST_VARIANT_ARCH} tools_path)
++      target_compile_options(${name} PRIVATE $<$<COMPILE_LANGUAGE:Swift>:-tools-directory;${tools_path};>)
++    endif()
++  endif()
+   _add_host_variant_swift_sanitizer_flags(${name})
+ 
+   target_compile_options(${name} PRIVATE
+diff --git a/swift/cmake/modules/AddSwift.cmake b/swift/cmake/modules/AddSwift.cmake
+index 8a33ef12617..3e956b30e63 100644
+--- a/swift/cmake/modules/AddSwift.cmake
++++ b/swift/cmake/modules/AddSwift.cmake
+@@ -529,15 +529,19 @@ function(_add_swift_runtime_link_flags target relpath_to_lib_dir bootstrapping)
+   elseif(SWIFT_HOST_VARIANT_SDK MATCHES "LINUX|ANDROID|OPENBSD|FREEBSD|WINDOWS")
+     set(swiftrt "swiftImageRegistrationObject${SWIFT_SDK_${SWIFT_HOST_VARIANT_SDK}_OBJECT_FORMAT}-${SWIFT_SDK_${SWIFT_HOST_VARIANT_SDK}_LIB_SUBDIR}-${SWIFT_HOST_VARIANT_ARCH}")
+     if(ASRLF_BOOTSTRAPPING_MODE MATCHES "HOSTTOOLS|CROSSCOMPILE")
+-      # At build time and run time, link against the swift libraries in the
+-      # installed host toolchain.
+-      if(SWIFT_PATH_TO_SWIFT_SDK)
+-        set(swift_dir "${SWIFT_PATH_TO_SWIFT_SDK}/usr")
++      if(ASRLF_BOOTSTRAPPING_MODE STREQUAL "HOSTTOOLS")
++        # At build time and run time, link against the swift libraries in the
++        # installed host toolchain.
++          if(SWIFT_PATH_TO_SWIFT_SDK)
++          set(swift_dir "${SWIFT_PATH_TO_SWIFT_SDK}/usr")
++        else()
++          get_filename_component(swift_bin_dir ${SWIFT_EXEC_FOR_SWIFT_MODULES} DIRECTORY)
++          get_filename_component(swift_dir ${swift_bin_dir} DIRECTORY)
++        endif()
++        set(host_lib_dir "${swift_dir}/lib/swift/${SWIFT_SDK_${SWIFT_HOST_VARIANT_SDK}_LIB_SUBDIR}")
+       else()
+-        get_filename_component(swift_bin_dir ${SWIFT_EXEC_FOR_SWIFT_MODULES} DIRECTORY)
+-        get_filename_component(swift_dir ${swift_bin_dir} DIRECTORY)
++        set(host_lib_dir "${SWIFTLIB_DIR}/${SWIFT_SDK_${SWIFT_HOST_VARIANT_SDK}_LIB_SUBDIR}")
+       endif()
+-      set(host_lib_dir "${swift_dir}/lib/swift/${SWIFT_SDK_${SWIFT_HOST_VARIANT_SDK}_LIB_SUBDIR}")
+       set(host_lib_arch_dir "${host_lib_dir}/${SWIFT_HOST_VARIANT_ARCH}")
+ 
+       set(swiftrt "${host_lib_arch_dir}/swiftrt${CMAKE_C_OUTPUT_EXTENSION}")
+diff --git a/swift/lib/SwiftSyntax/CMakeLists.txt b/swift/lib/SwiftSyntax/CMakeLists.txt
+index b39061073c9..871ae8caf20 100644
+--- a/swift/lib/SwiftSyntax/CMakeLists.txt
++++ b/swift/lib/SwiftSyntax/CMakeLists.txt
+@@ -71,6 +71,10 @@ endif()
+ add_dependencies(swift-syntax-lib
+   ${SWIFT_SYNTAX_MODULES})
+ 
++if(BOOTSTRAPPING_MODE STREQUAL "CROSSCOMPILE")
++    add_dependencies(swift-syntax-lib swift-stdlib-${SWIFT_SDK_${SWIFT_HOST_VARIANT_SDK}_LIB_SUBDIR}-${SWIFT_HOST_VARIANT_ARCH})
++endif()
++
+ # Install Swift module interface files.
+ foreach(module ${SWIFT_SYNTAX_MODULES})
+   set(module_dir "${module}.swiftmodule")
+diff --git a/swift/stdlib/cmake/modules/SwiftSource.cmake b/swift/stdlib/cmake/modules/SwiftSource.cmake
+index 2c4195ec682..cdb6d4430d6 100644
+--- a/swift/stdlib/cmake/modules/SwiftSource.cmake
++++ b/swift/stdlib/cmake/modules/SwiftSource.cmake
+@@ -836,8 +836,9 @@ function(_compile_swift_files
+   endif()
+ 
+   set(swift_compiler_tool_dep)
+-  if(SWIFT_INCLUDE_TOOLS)
+-    # Depend on the binary itself, in addition to the symlink.
++  if(SWIFT_INCLUDE_TOOLS AND NOT BOOTSTRAPPING_MODE STREQUAL "CROSSCOMPILE")
++    # Depend on the binary itself, in addition to the symlink, unless
++    # cross-compiling the compiler.
+     set(swift_compiler_tool_dep "swift-frontend${target_suffix}")
+   endif()
+ 
+diff --git a/swift/tools/SourceKit/cmake/modules/AddSwiftSourceKit.cmake b/swift/tools/SourceKit/cmake/modules/AddSwiftSourceKit.cmake
+index 4012fcb53e6..328de29ebb2 100644
+--- a/swift/tools/SourceKit/cmake/modules/AddSwiftSourceKit.cmake
++++ b/swift/tools/SourceKit/cmake/modules/AddSwiftSourceKit.cmake
+@@ -106,11 +106,15 @@ function(add_sourcekit_swift_runtime_link_flags target path HAS_SWIFT_MODULES)
+   elseif(SWIFT_HOST_VARIANT_SDK MATCHES "LINUX|ANDROID|OPENBSD" AND HAS_SWIFT_MODULES AND ASKD_BOOTSTRAPPING_MODE)
+     set(swiftrt "swiftImageRegistrationObject${SWIFT_SDK_${SWIFT_HOST_VARIANT_SDK}_OBJECT_FORMAT}-${SWIFT_SDK_${SWIFT_HOST_VARIANT_SDK}_LIB_SUBDIR}-${SWIFT_HOST_VARIANT_ARCH}")
+     if(ASKD_BOOTSTRAPPING_MODE MATCHES "HOSTTOOLS|CROSSCOMPILE")
+-      # At build time and run time, link against the swift libraries in the
+-      # installed host toolchain.
+-      get_filename_component(swift_bin_dir ${SWIFT_EXEC_FOR_SWIFT_MODULES} DIRECTORY)
+-      get_filename_component(swift_dir ${swift_bin_dir} DIRECTORY)
+-      set(host_lib_dir "${swift_dir}/lib/swift/${SWIFT_SDK_${SWIFT_HOST_VARIANT_SDK}_LIB_SUBDIR}")
++      if(ASKD_BOOTSTRAPPING_MODE MATCHES "HOSTTOOLS")
++        # At build time and run time, link against the swift libraries in the
++        # installed host toolchain.
++        get_filename_component(swift_bin_dir ${SWIFT_EXEC_FOR_SWIFT_MODULES} DIRECTORY)
++        get_filename_component(swift_dir ${swift_bin_dir} DIRECTORY)
++        set(host_lib_dir "${swift_dir}/lib/swift/${SWIFT_SDK_${SWIFT_HOST_VARIANT_SDK}_LIB_SUBDIR}")
++      else()
++        set(host_lib_dir "${SWIFTLIB_DIR}/${SWIFT_SDK_${SWIFT_HOST_VARIANT_SDK}_LIB_SUBDIR}")
++      endif()
+ 
+       target_link_libraries(${target} PRIVATE ${swiftrt})
+       target_link_libraries(${target} PRIVATE "swiftCore")
