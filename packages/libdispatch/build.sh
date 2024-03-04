@@ -1,9 +1,9 @@
-TERMUX_PKG_HOMEPAGE=https://github.com/apple/swift-corelibs-libdispatch
+TERMUX_PKG_HOMEPAGE=https://github.com/swiftlang/swift-corelibs-libdispatch
 TERMUX_PKG_DESCRIPTION="The libdispatch project, for concurrency on multicore hardware"
 TERMUX_PKG_LICENSE="Apache-2.0"
 TERMUX_PKG_MAINTAINER="@finagolfin"
-TERMUX_PKG_VERSION="1:5.10"
-TERMUX_PKG_SRCURL=https://github.com/apple/swift-corelibs-libdispatch/archive/swift-${TERMUX_PKG_VERSION:2}-RELEASE.tar.gz
-TERMUX_PKG_SHA256=16e088cf12654d22658879710b9694a6fad1c94d5e5d0c597741b71fbcb3e034
+TERMUX_PKG_VERSION="1:6.0"
+TERMUX_PKG_SRCURL=https://github.com/swiftlang/swift-corelibs-libdispatch/archive/swift-${TERMUX_PKG_VERSION:2}-DEVELOPMENT-SNAPSHOT-2024-11-05-a.tar.gz
+TERMUX_PKG_SHA256=0b68c9dfb3f5a95467de9f9a057566d979728cfed54cffc39df5011bc0a0574d
 TERMUX_PKG_AUTO_UPDATE=false
 TERMUX_PKG_DEPENDS="libc++, libblocksruntime"

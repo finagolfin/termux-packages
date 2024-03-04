@@ -1,9 +1,9 @@
-TERMUX_PKG_HOMEPAGE=https://github.com/apple/swift-llbuild
+TERMUX_PKG_HOMEPAGE=https://github.com/swiftlang/swift-llbuild
 TERMUX_PKG_DESCRIPTION="A low-level build system, used by the Swift Package Manager"
 TERMUX_PKG_LICENSE="Apache-2.0, NCSA"
 TERMUX_PKG_MAINTAINER="@finagolfin"
-TERMUX_PKG_VERSION=5.10
-TERMUX_PKG_SRCURL=https://github.com/apple/swift-llbuild/archive/swift-${TERMUX_PKG_VERSION}-RELEASE.tar.gz
-TERMUX_PKG_SHA256=ae8962d59244abac157c02813d05e1c077915bbd6022fe9fb62040806ac8dc55
+TERMUX_PKG_VERSION=6.0
+TERMUX_PKG_SRCURL=https://github.com/swiftlang/swift-llbuild/archive/swift-${TERMUX_PKG_VERSION}-DEVELOPMENT-SNAPSHOT-2024-11-05-a.tar.gz
+TERMUX_PKG_SHA256=841f52f831a630af2fbaa958b3404ab11fe9858e51d6bc441f7936aa6bf2699e
 TERMUX_PKG_DEPENDS="libc++, libandroid-spawn, libsqlite"
 TERMUX_PKG_NO_STATICSPLIT=true
