@@ -10,15 +10,38 @@ index 17ad9e3..953fffd 100755
          else:
              fatal_error("cannot cross-compile for %s" % args.cross_compile_host)
  
-diff --git a/swiftpm/Utilities/bootstrap b/swiftpm/Utilities/bootstrap
-index 085056de..1ded1a90 100755
---- a/swiftpm/Utilities/bootstrap
-+++ b/swiftpm/Utilities/bootstrap
-@@ -834,6 +834,7 @@ def get_swiftpm_flags(args):
-             build_flags += ["--arch", "x86_64", "--arch", "arm64"]
-         elif cross_compile_hosts.startswith('android-'):
-             build_flags.extend(["--destination", args.cross_compile_config])
-+            build_flags.extend(["--pkg-config-path", os.path.join(os.path.split(args.cross_compile_config)[0], "lib/pkgconfig")])
-         else:
-             error("cannot cross-compile for %s" % cross_compile_hosts)
+diff --git a/swiftpm/Package.swift b/swiftpm/Package.swift
+index 48cd98431..6eaacae00 100644
+--- a/swiftpm/Package.swift
++++ b/swiftpm/Package.swift
+@@ -76,7 +76,7 @@ let swiftPMProduct = (
+ let systemSQLitePkgConfig: String? = nil
+ #else
+ let includeDynamicLibrary: Bool = true
+-let systemSQLitePkgConfig: String? = "sqlite3"
++let systemSQLitePkgConfig: String? = nil
+ #endif
+
+ /** An array of products which have two versions listed: one dynamically linked, the other with the
+@@ -199,7 +203,7 @@ let package = Package(
+             dependencies: [
+                 "_AsyncFileSystem",
+                 .target(name: "SPMSQLite3", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .macCatalyst, .linux])),
+-                .product(name: "SwiftToolchainCSQLite", package: "swift-toolchain-sqlite", condition: .when(platforms: [.windows])),
++                .product(name: "SwiftToolchainCSQLite", package: "swift-toolchain-sqlite", condition: .when(platforms: [.windows, .android])),
+                 .product(name: "DequeModule", package: "swift-collections"),
+                 .product(name: "OrderedCollections", package: "swift-collections"),
+                 .product(name: "SwiftToolsSupport-auto", package: "swift-tools-support-core"),
+diff --git a/swiftpm/Sources/Basics/SQLite.swift b/swiftpm/Sources/Basics/SQLite.swift
+index 2ad235030..803490b48 100644
+--- a/swiftpm/Sources/Basics/SQLite.swift
++++ b/swiftpm/Sources/Basics/SQLite.swift
+@@ -12,7 +12,7 @@
  
+ import Foundation
+ 
+-#if SWIFT_PACKAGE && os(Windows)
++#if SWIFT_PACKAGE && (os(Windows) || os(Android))
+ #if USE_IMPL_ONLY_IMPORTS
+ @_implementationOnly import SwiftToolchainCSQLite
+ #else
