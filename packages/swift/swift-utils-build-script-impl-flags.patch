@@ -63,7 +63,7 @@ index b1d060328bc..218c9215260 100755
                      "${swift_cmake_options[@]}"
                  )
  
-@@ -2045,6 +2045,8 @@ for host in "${ALL_HOSTS[@]}"; do
+@@ -2300,6 +2314,8 @@
                      cmake_options+=(
                          -DCMAKE_FIND_ROOT_PATH:PATH="${CROSS_COMPILE_DEPS_PATH}"
                          -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER
