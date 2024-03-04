@@ -10,11 +10,12 @@ index b1d060328bc..218c9215260 100755
                  if [[ ! "${SKIP_BUILD_ANDROID}" ]] ||
                     [[ $(is_cross_tools_host ${host}) && "${host}" == "android-"* ]]; then
                      cmake_options=(
-@@ -1733,6 +1734,7 @@
+@@ -1733,6 +1734,8 @@
                          -DSWIFT_ANDROID_DEPLOY_DEVICE_PATH:STRING="${ANDROID_DEPLOY_DEVICE_PATH}"
                          -DSWIFT_SDK_ANDROID_ARCHITECTURES:STRING="${ANDROID_ARCH}"
                      )
 +                    cross_c_flags="$CFLAGS --target=$CCTERMUX_HOST_PLATFORM"
++                    call ln -sf "$(build_directory ${host} swift)/lib/swift" "${ANDROID_NDK}/sysroot/usr/lib"
                  fi
  
                  if [[ ! "${SKIP_BUILD_WASM}" ]]; then
@@ -121,7 +122,7 @@ index b1d060328bc..218c9215260 100755
                  if [[ -z "${INSTALL_LLBUILD}" ]] ; then
                      continue
                  fi
--                INSTALL_TARGETS="install-swift-build-tool install-libllbuildSwift"
+-                INSTALL_TARGETS="install-swift-build-tool"
 +                INSTALL_TARGETS=""
 +                # Use the system libdispatch headers instead.
 +                sed -i -e "s%dispatch\.h%@TERMUX_PREFIX@/include/dispatch/dispatch.h%" \
