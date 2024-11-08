@@ -95,6 +95,20 @@ index 79413a711d4..9eca061e1ca 100644
  
    set(all_obj_files)
    set(all_module_targets)
+diff --git a/swift/lib/SwiftSyntax/CMakeLists.txt b/swift/lib/SwiftSyntax/CMakeLists.txt
+index 5c7bd65fead..36f3bbc1b91 100644
+--- a/swift/lib/SwiftSyntax/CMakeLists.txt
++++ b/swift/lib/SwiftSyntax/CMakeLists.txt
+@@ -80,6 +80,9 @@ endif()
+ 
+ # Install Swift module interface files.
+ foreach(module ${SWIFT_SYNTAX_MODULES})
++  if(BOOTSTRAPPING_MODE STREQUAL "CROSSCOMPILE")
++    add_dependencies(${module} swift-stdlib-${SWIFT_SDK_${SWIFT_HOST_VARIANT_SDK}_LIB_SUBDIR}-${SWIFT_HOST_VARIANT_ARCH})
++  endif()
+   set(module_dir "${module}.swiftmodule")
+   set(module_file "${SWIFT_HOST_LIBRARIES_DEST_DIR}/${module_dir}/${SWIFT_HOST_MODULE_TRIPLE}")
+   swift_install_in_component(FILES "${module_file}.swiftinterface" "${module_file}.private.swiftinterface"
 diff --git a/swift/localization/CMakeLists.txt b/swift/localization/CMakeLists.txt
 index 07a3585a66c..461a98b6856 100644
 --- a/swift/localization/CMakeLists.txt
