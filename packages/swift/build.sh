@@ -4,7 +4,7 @@ TERMUX_PKG_LICENSE="Apache-2.0, NCSA"
 TERMUX_PKG_MAINTAINER="@finagolfin"
 TERMUX_PKG_VERSION=6.0.2
 SWIFT_RELEASE="RELEASE"
-TERMUX_PKG_SRCURL=https://github.com/swiftlang/swift/archive/swift-$TERMUX_PKG_VERSION-$SWIFT_RELEASE.tar.gz
+TERMUX_PKG_SRCURL=https://github.com/swiftlang/swift/archive/swift-$SWIFT_RELEASE.tar.gz
 TERMUX_PKG_SHA256=1489681860e92cee5ddd869a06531d7a1746b2f4ea105a2ff3b631ebcbcffd34
 TERMUX_PKG_AUTO_UPDATE=false
 TERMUX_PKG_HOSTBUILD=true
@@ -92,7 +92,7 @@ termux_step_post_get_source() {
 		else
 			GH_ORG="swiftlang"
 			SRC_VERSION=$SWIFT_RELEASE
-			TAR_NAME=swift-$TERMUX_PKG_VERSION-$SWIFT_RELEASE
+			TAR_NAME=swift-$SWIFT_RELEASE
 		fi
 
 		termux_download \
